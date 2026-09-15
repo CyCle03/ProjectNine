@@ -1,0 +1,16 @@
+{
+  "school_name": "한빛고등학교",
+  "roster_min": 18,
+  "roster_max": 25,
+  "first_names": ["민준", "서준", "도윤", "예준", "시우", "주원", "하준", "지호", "준우", "현우", "건우", "우진"],
+  "last_names": ["김", "이", "박", "최", "정", "강", "조", "윤", "장", "임", "한", "오"],
+  "positions": ["P", "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF"],
+  "position_weights": [0.28, 0.08, 0.08, 0.09, 0.08, 0.09, 0.08, 0.12, 0.10],
+  "attribute_min": 35,
+  "attribute_max": 78,
+  "potential_min": 55,
+  "potential_max": 95,
+  "growth_rate_min": 0.8,
+  "growth_rate_max": 1.3
+}
+
