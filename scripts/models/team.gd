@@ -31,14 +31,33 @@ func get_player(player_id: String) -> Player:
 	return null
 
 func default_batting_order() -> Array[String]:
-	var sorted_players := players.duplicate()
-	sorted_players.sort_custom(func(a: Player, b: Player): return a.overall() > b.overall())
+	var fielders: Array[Player] = []
+	var pitchers: Array[Player] = []
+	for player in players:
+		if player.is_pitcher():
+			pitchers.append(player)
+		else:
+			fielders.append(player)
+	fielders.sort_custom(func(a: Player, b: Player): return _batting_score(a) > _batting_score(b))
+	pitchers.sort_custom(func(a: Player, b: Player): return a.overall() > b.overall())
 	var result: Array[String] = []
-	for player in sorted_players:
-		if result.size() >= LINEUP_SIZE:
+	for player in fielders:
+		if result.size() >= LINEUP_SIZE - 1:
 			break
 		result.append(player.id)
+	if not pitchers.is_empty():
+		result.append(pitchers[0].id)
+	for player in fielders + pitchers:
+		if result.size() >= LINEUP_SIZE:
+			break
+		if not result.has(player.id):
+			result.append(player.id)
 	return result
+
+func _batting_score(player: Player) -> float:
+	var skill := player.contact * 0.42 + player.power * 0.25 + player.eye * 0.20 + player.speed * 0.13
+	var readiness := clampf((player.condition - player.fatigue * 0.35) / 100.0, 0.5, 1.0)
+	return skill * readiness
 
 func set_batting_order(player_ids: Array[String]) -> bool:
 	if player_ids.size() != LINEUP_SIZE:

@@ -50,6 +50,12 @@ func _ready() -> void:
 	guide.add_theme_font_size_override("font_size", 15)
 	guide.add_theme_color_override("font_color", Color("aebdce"))
 	layout.add_child(guide)
+	var auto_button := Button.new()
+	auto_button.text = "추천 타순 자동 편성"
+	auto_button.custom_minimum_size.y = 48
+	auto_button.add_theme_font_size_override("font_size", 17)
+	auto_button.pressed.connect(_apply_recommended_order)
+	layout.add_child(auto_button)
 
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -109,6 +115,21 @@ func _add_selector(slot: int, selected_id: String) -> void:
 			selector.select(selector.item_count - 1)
 	row.add_child(selector)
 	selectors.append(selector)
+
+func _apply_recommended_order() -> void:
+	if team == null:
+		return
+	var order := team.default_batting_order()
+	for slot in selectors.size():
+		if slot >= order.size():
+			break
+		var selector := selectors[slot]
+		for index in selector.item_count:
+			if str(selector.get_item_metadata(index)) == order[slot]:
+				selector.select(index)
+				break
+	error_label.text = "추천 타순을 적용했습니다. 필요하면 선수를 바꾼 뒤 확정하세요."
+	error_label.add_theme_color_override("font_color", Color("8fb7e8"))
 
 func _save() -> void:
 	var ids: Array[String] = []
