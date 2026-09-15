@@ -1,12 +1,12 @@
 extends Control
 const API_BASE := "https://nine.elcherlab.com"
 const LOCAL_TEAM_PATH := "user://project_nine_team.json"
-const ROSTER_SCROLL_SPEED := 2.4
 
 const POSITION_NAMES := {"P": "투수", "C": "포수", "1B": "1루", "2B": "2루", "3B": "3루", "SS": "유격", "LF": "좌익", "CF": "중견", "RF": "우익"}
 var team: Team
 var roster_container: VBoxContainer
 var roster_scroll: ScrollContainer
+var team_label: Label
 var detail: PlayerDetail
 var lineup_screen: LineupScreen
 var lineup_label: Label
@@ -18,6 +18,7 @@ func _ready() -> void:
 	team = _load_or_create_local_team()
 	_build_ui()
 	_populate_roster()
+	_update_team_label()
 	_update_lineup_label()
 	_sync_remote_team()
 
@@ -63,10 +64,10 @@ func _build_ui() -> void:
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.add_theme_color_override("font_color", Color("aebdce"))
 	page.add_child(subtitle)
-	var team_label := Label.new()
-	team_label.text = "%s · 선수 %d명" % [team.team_name, team.roster_size()]
+	team_label = Label.new()
 	team_label.add_theme_font_size_override("font_size", 21)
 	page.add_child(team_label)
+	_update_team_label()
 	var guide := Label.new()
 	guide.text = "선수를 살펴본 뒤 선발 타순을 구성하세요. 선수 이름을 터치하면 상세 능력치를 볼 수 있습니다."
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -95,6 +96,7 @@ func _build_ui() -> void:
 	roster_scroll = ScrollContainer.new()
 	roster_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	roster_scroll.scroll_deadzone = 10
 	page.add_child(roster_scroll)
 	roster_container = VBoxContainer.new()
 	roster_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -121,11 +123,7 @@ func _populate_roster() -> void:
 		var row := RosterRow.new()
 		row.setup(player, POSITION_NAMES.get(player.primary_position, player.primary_position))
 		row.selected.connect(_open_detail)
-		row.scroll_requested.connect(_scroll_roster)
 		roster_container.add_child(row)
-
-func _scroll_roster(delta_y: float) -> void:
-	roster_scroll.scroll_vertical = maxi(0, roster_scroll.scroll_vertical - roundi(delta_y * ROSTER_SCROLL_SPEED))
 
 func _open_detail(player: Player) -> void:
 	detail.show_player(player)
@@ -142,6 +140,10 @@ func _set_batting_order(player_ids: Array[String]) -> void:
 	_update_lineup_label()
 	_save_local_team()
 	_sync_remote_team(true)
+
+func _update_team_label() -> void:
+	if team_label != null:
+		team_label.text = "%s · 선수 %d명" % [team.team_name, team.roster_size()]
 
 func _update_lineup_label() -> void:
 	if team.batting_order.size() != Team.LINEUP_SIZE:
@@ -167,6 +169,7 @@ func _on_api_completed(result: int, code: int, _headers: PackedStringArray, body
 			team = Team.from_dict(data["team"])
 			_save_local_team()
 			_populate_roster()
+			_update_team_label()
 			_update_lineup_label()
 			sync_label.text = "데이터 상태: 계정 선수단을 불러왔습니다"
 		else:

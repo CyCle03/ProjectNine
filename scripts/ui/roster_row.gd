@@ -2,8 +2,6 @@ class_name RosterRow
 extends PanelContainer
 
 signal selected(player: Player)
-signal scroll_requested(delta_y: float)
-
 const DRAG_THRESHOLD := 14.0
 
 var player: Player
@@ -13,7 +11,7 @@ var dragging := false
 
 func _ready() -> void:
 	custom_minimum_size.y = 68
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_filter = Control.MOUSE_FILTER_PASS
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	add_theme_stylebox_override("panel", _make_row_style())
 	gui_input.connect(_on_gui_input)
@@ -54,17 +52,13 @@ func _handle_touch(position: Vector2, pressed: bool) -> void:
 			selected.emit(player)
 		press_position = Vector2.ZERO
 		last_position = Vector2.ZERO
-	accept_event()
 
 func _handle_motion(position: Vector2) -> void:
 	if press_position == Vector2.ZERO:
 		return
 	if not dragging and position.distance_to(press_position) >= DRAG_THRESHOLD:
 		dragging = true
-	if dragging:
-		scroll_requested.emit(position.y - last_position.y)
 	last_position = position
-	accept_event()
 
 func _make_row_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
