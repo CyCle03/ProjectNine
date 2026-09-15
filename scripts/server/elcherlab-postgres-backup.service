@@ -1,0 +1,7 @@
+[Unit]
+Description=Create a local PostgreSQL backup for Elcherlab
+
+[Service]
+Type=oneshot
+User=ubuntu
+ExecStart=/usr/local/sbin/elcherlab-postgres-backup
