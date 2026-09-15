@@ -3,3 +3,7 @@ export/
 *.apk
 *.aab
 
+
+server/node_modules/
+.env
+.env.*

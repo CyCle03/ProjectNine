@@ -1,17 +1,19 @@
 extends Control
+const API_BASE := "https://nine.elcherlab.com"
 
 const POSITION_NAMES := {"P": "투수", "C": "포수", "1B": "1루", "2B": "2루", "3B": "3루", "SS": "유격", "LF": "좌익", "CF": "중견", "RF": "우익"}
-
 var team: Team
 var roster_container: VBoxContainer
 var detail: PlayerDetail
-
+var sync_label: Label
+var api_request: HTTPRequest
+var request_mode := ""
 
 func _ready() -> void:
 	team = PlayerGenerator.new().create_test_team()
 	_build_ui()
 	_populate_roster()
-
+	_sync_remote_team()
 
 func _build_ui() -> void:
 	var background := ColorRect.new()
@@ -34,12 +36,10 @@ func _build_ui() -> void:
 	subtitle.text = "%s  ·  선수 %d명" % [team.team_name, team.roster_size()]
 	subtitle.add_theme_font_size_override("font_size", 19)
 	page.add_child(subtitle)
-	var guide := Label.new()
-	guide.text = "선수를 선택하면 상세 능력치를 확인할 수 있습니다."
-	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	guide.add_theme_color_override("font_color", Color("aebdce"))
-	guide.add_theme_font_size_override("font_size", 16)
-	page.add_child(guide)
+	sync_label = Label.new()
+	sync_label.text = "로컬 선수단"
+	sync_label.add_theme_color_override("font_color", Color("aebdce"))
+	page.add_child(sync_label)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(scroll)
@@ -51,9 +51,12 @@ func _build_ui() -> void:
 	detail.visible = false
 	detail.closed.connect(func(): detail.visible = false)
 	add_child(detail)
-
+	api_request = HTTPRequest.new()
+	api_request.request_completed.connect(_on_api_completed)
+	add_child(api_request)
 
 func _populate_roster() -> void:
+	for child in roster_container.get_children(): child.queue_free()
 	var sorted_players := team.players.duplicate()
 	sorted_players.sort_custom(func(a: Player, b: Player): return a.grade > b.grade if a.grade != b.grade else a.overall() > b.overall())
 	for player: Player in sorted_players:
@@ -65,8 +68,26 @@ func _populate_roster() -> void:
 		button.pressed.connect(_open_detail.bind(player))
 		roster_container.add_child(button)
 
-
 func _open_detail(player: Player) -> void:
 	detail.show_player(player)
 	detail.visible = true
 
+func _sync_remote_team() -> void:
+	request_mode = "load"
+	api_request.request(API_BASE + "/api/save")
+
+func _on_api_completed(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200: return
+	var payload: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if not (payload is Dictionary): return
+	if request_mode == "load":
+		var data: Variant = payload.get("data", null)
+		if data is Dictionary and data.has("team"):
+			team = Team.from_dict(data["team"])
+			_populate_roster()
+			sync_label.text = "계정 선수단 불러옴"
+		else:
+			request_mode = "save"
+			api_request.request(API_BASE + "/api/save", ["Content-Type: application/json"], HTTPClient.METHOD_PUT, JSON.stringify({"team": team.to_dict()}))
+	elif request_mode == "save":
+		sync_label.text = "계정에 선수단 저장됨"
