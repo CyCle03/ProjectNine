@@ -96,7 +96,7 @@ func _build_ui() -> void:
 	roster_scroll = ScrollContainer.new()
 	roster_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
-	roster_scroll.scroll_deadzone = 10
+	roster_scroll.scroll_deadzone = 20
 	page.add_child(roster_scroll)
 	roster_container = VBoxContainer.new()
 	roster_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL

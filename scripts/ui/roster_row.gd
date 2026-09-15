@@ -2,7 +2,7 @@ class_name RosterRow
 extends PanelContainer
 
 signal selected(player: Player)
-const DRAG_THRESHOLD := 14.0
+const DRAG_THRESHOLD := 20.0
 
 var player: Player
 var press_position := Vector2.ZERO
