@@ -4,6 +4,7 @@ const API_BASE := "https://nine.elcherlab.com"
 const POSITION_NAMES := {"P": "투수", "C": "포수", "1B": "1루", "2B": "2루", "3B": "3루", "SS": "유격", "LF": "좌익", "CF": "중견", "RF": "우익"}
 var team: Team
 var roster_container: VBoxContainer
+var roster_scroll: ScrollContainer
 var detail: PlayerDetail
 var lineup_screen: LineupScreen
 var lineup_label: Label
@@ -69,13 +70,14 @@ func _build_ui() -> void:
 	roster_heading.text = "선수단 명단"
 	roster_heading.add_theme_font_size_override("font_size", 20)
 	page.add_child(roster_heading)
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page.add_child(scroll)
+	roster_scroll = ScrollContainer.new()
+	roster_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	roster_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	page.add_child(roster_scroll)
 	roster_container = VBoxContainer.new()
 	roster_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	roster_container.add_theme_constant_override("separation", 8)
-	scroll.add_child(roster_container)
+	roster_scroll.add_child(roster_container)
 	detail = PlayerDetail.new()
 	detail.visible = false
 	detail.closed.connect(func(): detail.visible = false)
@@ -94,13 +96,14 @@ func _populate_roster() -> void:
 	var sorted_players := team.players.duplicate()
 	sorted_players.sort_custom(func(a: Player, b: Player): return a.grade > b.grade if a.grade != b.grade else a.overall() > b.overall())
 	for player: Player in sorted_players:
-		var button := Button.new()
-		button.custom_minimum_size.y = 68
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 19)
-		button.text = "  %s   %d학년   %-2s   종합 %d" % [player.player_name, player.grade, POSITION_NAMES.get(player.primary_position, player.primary_position), player.overall()]
-		button.pressed.connect(_open_detail.bind(player))
-		roster_container.add_child(button)
+		var row := RosterRow.new()
+		row.setup(player, POSITION_NAMES.get(player.primary_position, player.primary_position))
+		row.selected.connect(_open_detail)
+		row.scroll_requested.connect(_scroll_roster)
+		roster_container.add_child(row)
+
+func _scroll_roster(delta_y: float) -> void:
+	roster_scroll.scroll_vertical = maxi(0, roster_scroll.scroll_vertical - roundi(delta_y))
 
 func _open_detail(player: Player) -> void:
 	detail.show_player(player)
