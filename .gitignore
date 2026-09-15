@@ -7,3 +7,4 @@ export/
 server/node_modules/
 .env
 .env.*
+server/node_modules
