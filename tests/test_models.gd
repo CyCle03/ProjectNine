@@ -14,6 +14,15 @@ func _init() -> void:
 	for player in team.players:
 		_check(player.grade >= 1 and player.grade <= 3, "grade is valid")
 		_check(player.overall() >= 1 and player.overall() <= 100, "overall is valid")
+	var default_order := team.default_batting_order()
+	_check(default_order.size() == Team.LINEUP_SIZE, "default lineup contains nine players")
+	_check(team.set_batting_order(default_order), "valid lineup is accepted")
+	_check(not team.set_batting_order(default_order.slice(0, 8)), "short lineup is rejected")
+	var duplicate_order := default_order.duplicate()
+	duplicate_order[8] = duplicate_order[0]
+	_check(not team.set_batting_order(duplicate_order), "duplicate lineup player is rejected")
+	var restored_team := Team.from_dict(team.to_dict())
+	_check(restored_team.batting_order == default_order, "lineup survives serialization")
 	print("PASS: all model tests" if failures == 0 else "FAIL: %d test(s)" % failures)
 	quit(failures)
 
