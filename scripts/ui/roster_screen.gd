@@ -1,6 +1,7 @@
 extends Control
 const API_BASE := "https://nine.elcherlab.com"
 const LOCAL_TEAM_PATH := "user://project_nine_team.json"
+const ROSTER_SCROLL_SPEED := 2.4
 
 const POSITION_NAMES := {"P": "투수", "C": "포수", "1B": "1루", "2B": "2루", "3B": "3루", "SS": "유격", "LF": "좌익", "CF": "중견", "RF": "우익"}
 var team: Team
@@ -124,7 +125,7 @@ func _populate_roster() -> void:
 		roster_container.add_child(row)
 
 func _scroll_roster(delta_y: float) -> void:
-	roster_scroll.scroll_vertical = maxi(0, roster_scroll.scroll_vertical - roundi(delta_y))
+	roster_scroll.scroll_vertical = maxi(0, roster_scroll.scroll_vertical - roundi(delta_y * ROSTER_SCROLL_SPEED))
 
 func _open_detail(player: Player) -> void:
 	detail.show_player(player)
