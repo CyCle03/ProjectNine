@@ -33,13 +33,28 @@ func _build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 34)
 	page.add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "%s  ·  선수 %d명" % [team.team_name, team.roster_size()]
-	subtitle.add_theme_font_size_override("font_size", 19)
+	subtitle.text = "고교야구 감독/육성 시뮬레이션 · v0.1"
+	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_color_override("font_color", Color("aebdce"))
 	page.add_child(subtitle)
+	var team_label := Label.new()
+	team_label.text = "%s · 선수 %d명" % [team.team_name, team.roster_size()]
+	team_label.add_theme_font_size_override("font_size", 21)
+	page.add_child(team_label)
+	var guide := Label.new()
+	guide.text = "지금 할 수 있는 것: 선수 이름을 터치해 능력치와 성장 가능성을 확인하세요."
+	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	guide.add_theme_font_size_override("font_size", 16)
+	guide.add_theme_color_override("font_color", Color("aebdce"))
+	page.add_child(guide)
 	sync_label = Label.new()
-	sync_label.text = "로컬 선수단"
-	sync_label.add_theme_color_override("font_color", Color("aebdce"))
+	sync_label.text = "데이터 상태: 로컬 선수단"
+	sync_label.add_theme_color_override("font_color", Color("8fb7e8"))
 	page.add_child(sync_label)
+	var roster_heading := Label.new()
+	roster_heading.text = "선수단 명단"
+	roster_heading.add_theme_font_size_override("font_size", 20)
+	page.add_child(roster_heading)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(scroll)
@@ -85,9 +100,9 @@ func _on_api_completed(result: int, code: int, _headers: PackedStringArray, body
 		if data is Dictionary and data.has("team"):
 			team = Team.from_dict(data["team"])
 			_populate_roster()
-			sync_label.text = "계정 선수단 불러옴"
+			sync_label.text = "데이터 상태: 계정 선수단을 불러왔습니다"
 		else:
 			request_mode = "save"
 			api_request.request(API_BASE + "/api/save", ["Content-Type: application/json"], HTTPClient.METHOD_PUT, JSON.stringify({"team": team.to_dict()}))
 	elif request_mode == "save":
-		sync_label.text = "계정에 선수단 저장됨"
+		sync_label.text = "데이터 상태: 계정에 선수단을 저장했습니다"
