@@ -1,5 +1,6 @@
 extends Control
 const API_BASE := "https://nine.elcherlab.com"
+const LOCAL_TEAM_PATH := "user://project_nine_team.json"
 
 const POSITION_NAMES := {"P": "투수", "C": "포수", "1B": "1루", "2B": "2루", "3B": "3루", "SS": "유격", "LF": "좌익", "CF": "중견", "RF": "우익"}
 var team: Team
@@ -13,11 +14,31 @@ var api_request: HTTPRequest
 var request_mode := ""
 
 func _ready() -> void:
-	team = PlayerGenerator.new().create_test_team()
+	team = _load_or_create_local_team()
 	_build_ui()
 	_populate_roster()
 	_update_lineup_label()
 	_sync_remote_team()
+
+func _load_or_create_local_team() -> Team:
+	if FileAccess.file_exists(LOCAL_TEAM_PATH):
+		var file := FileAccess.open(LOCAL_TEAM_PATH, FileAccess.READ)
+		var data: Variant = JSON.parse_string(file.get_as_text()) if file != null else null
+		if data is Dictionary:
+			var saved_team := Team.from_dict(data)
+			if saved_team.roster_size() > 0:
+				return saved_team
+	var generated_team := PlayerGenerator.new().create_test_team()
+	team = generated_team
+	_save_local_team()
+	return generated_team
+
+func _save_local_team() -> void:
+	if team == null:
+		return
+	var file := FileAccess.open(LOCAL_TEAM_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(team.to_dict()))
 
 func _build_ui() -> void:
 	var background := ColorRect.new()
@@ -118,6 +139,7 @@ func _set_batting_order(player_ids: Array[String]) -> void:
 		return
 	lineup_screen.visible = false
 	_update_lineup_label()
+	_save_local_team()
 	_sync_remote_team(true)
 
 func _update_lineup_label() -> void:
@@ -142,6 +164,7 @@ func _on_api_completed(result: int, code: int, _headers: PackedStringArray, body
 		var data: Variant = payload.get("data", null)
 		if data is Dictionary and data.has("team"):
 			team = Team.from_dict(data["team"])
+			_save_local_team()
 			_populate_roster()
 			_update_lineup_label()
 			sync_label.text = "데이터 상태: 계정 선수단을 불러왔습니다"
