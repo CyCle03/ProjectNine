@@ -9,6 +9,7 @@ var roster_scroll: ScrollContainer
 var team_label: Label
 var detail: PlayerDetail
 var lineup_screen: LineupScreen
+var match_result_screen: MatchResultScreen
 var lineup_label: Label
 var sync_label: Label
 var api_request: HTTPRequest
@@ -80,6 +81,12 @@ func _build_ui() -> void:
 	lineup_button.add_theme_font_size_override("font_size", 18)
 	lineup_button.pressed.connect(_open_lineup)
 	page.add_child(lineup_button)
+	var match_button := Button.new()
+	match_button.text = "연습 경기 시뮬레이션"
+	match_button.custom_minimum_size.y = 52
+	match_button.add_theme_font_size_override("font_size", 18)
+	match_button.pressed.connect(_start_practice_game)
+	page.add_child(match_button)
 	lineup_label = Label.new()
 	lineup_label.add_theme_font_size_override("font_size", 16)
 	lineup_label.add_theme_color_override("font_color", Color("aebdce"))
@@ -111,6 +118,10 @@ func _build_ui() -> void:
 	lineup_screen.closed.connect(func(): lineup_screen.visible = false)
 	lineup_screen.saved.connect(_set_batting_order)
 	add_child(lineup_screen)
+	match_result_screen = MatchResultScreen.new()
+	match_result_screen.visible = false
+	match_result_screen.closed.connect(func(): match_result_screen.visible = false)
+	add_child(match_result_screen)
 	api_request = HTTPRequest.new()
 	api_request.request_completed.connect(_on_api_completed)
 	add_child(api_request)
@@ -132,6 +143,16 @@ func _open_detail(player: Player) -> void:
 func _open_lineup() -> void:
 	lineup_screen.show_team(team)
 	lineup_screen.visible = true
+
+func _start_practice_game() -> void:
+	if team.batting_order.size() != Team.LINEUP_SIZE:
+		sync_label.text = "데이터 상태: 먼저 선발 타순을 구성하세요"
+		return
+	var opponent := PlayerGenerator.new().create_test_team()
+	opponent.team_name = "연습 상대 고교"
+	var result := GameEngine.new().simulate_game(team, opponent)
+	match_result_screen.show_result(result)
+	match_result_screen.visible = true
 
 func _set_batting_order(player_ids: Array[String]) -> void:
 	if not team.set_batting_order(player_ids):

@@ -23,6 +23,10 @@ func _init() -> void:
 	_check(not team.set_batting_order(duplicate_order), "duplicate lineup player is rejected")
 	var restored_team := Team.from_dict(team.to_dict())
 	_check(restored_team.batting_order == default_order, "lineup survives serialization")
+	var opponent := PlayerGenerator.new(67890).create_test_team()
+	var game_result := GameEngine.new(999).simulate_game(team, opponent)
+	_check(int(game_result.get("away_score", -1)) >= 0 and int(game_result.get("home_score", -1)) >= 0, "game scores are non-negative")
+	_check(game_result.get("away_innings", []).size() >= 9, "game completes at least nine innings")
 	print("PASS: all model tests" if failures == 0 else "FAIL: %d test(s)" % failures)
 	quit(failures)
 

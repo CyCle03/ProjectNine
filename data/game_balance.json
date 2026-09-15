@@ -1,0 +1,8 @@
+{
+  "strikeout_base": 0.16,
+  "walk_base": 0.08,
+  "home_run_base": 0.025,
+  "hit_base": 0.20,
+  "min_probability": 0.01,
+  "max_probability": 0.45
+}
